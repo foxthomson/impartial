@@ -1,5 +1,5 @@
 # impartial
-An attempt to prove the Sprague-Grundy theorem and other results related to impartial games in Lean
+A proof of the Sprague-Grundy theorem and other results related to impartial games in Lean
 
 This repository consists of 3 files, `src/position.lean`, `src/impartial.lean` and `src/nim.lean`
 
