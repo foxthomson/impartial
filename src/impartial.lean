@@ -83,7 +83,7 @@ begin
 	split,
 	{ intro i,
 		equiv_rw G.left_moves_neg at i,
-		rw move_left_right_moves_neg_symm,
+		rw move_left_left_moves_neg_symm,
 		exact impartial_neg (G.move_right i) },
 	{ intro j,
 		equiv_rw G.right_moves_neg at j,
