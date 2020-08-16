@@ -33,7 +33,7 @@ theorem one_l_postition : l_position 1 :=
 begin
     split,
     rw lt_def_le,
-    tidy,
+    tidy
 end
 theorem star_n_postition : n_position star := ⟨ zero_lt_star, star_lt_zero ⟩
 theorem omega_l_postition : l_position omega := 
@@ -42,7 +42,7 @@ begin
     rw lt_def_le,
     left,
     use 0,
-  tidy,
+  tidy
 end
 
 lemma position_cases (G : pgame) : G.l_position ∨ G.r_position ∨ G.p_position ∨ G.n_position :=
@@ -50,47 +50,24 @@ begin
   classical,
   by_cases hpos : 0 < G;
   by_cases hneg : G < 0;
-  try { rw not_lt at hpos };
-  try { rw not_lt at hneg };
-  try { left, exact ⟨ hpos, hneg ⟩ };
-  try { right, left, exact ⟨ hpos, hneg ⟩ };
-  try { right, right, left, exact ⟨ hpos, hneg ⟩ };
-  try { right, right, right, exact ⟨ hpos, hneg ⟩ }
+  { try { rw not_lt at hpos },
+    try { rw not_lt at hneg },
+    try { left, exact ⟨ hpos, hneg ⟩ },
+    try { right, left, exact ⟨ hpos, hneg ⟩ },
+    try { right, right, left, exact ⟨ hpos, hneg ⟩ },
+    try { right, right, right, exact ⟨ hpos, hneg ⟩ } }
 end
 
 lemma p_position_is_zero {G : pgame} : G.p_position ↔ G ≈ 0 := by refl
 
 lemma p_position_of_equiv {G H : pgame} (h : G ≈ H) : G.p_position → H.p_position :=
-begin
-	intro hGp,
-	split,
-	{ apply le_of_equiv_of_le h.symm, exact hGp.1 },
-	{ apply le_of_le_of_equiv _ h, exact hGp.2 }
-end
-
+λ hGp, ⟨ le_of_equiv_of_le h.symm hGp.1, le_of_le_of_equiv hGp.2 h ⟩
 lemma n_position_of_equiv {G H : pgame} (h : G ≈ H) : G.n_position → H.n_position :=
-begin
-	intro hGn,
-	split,
-	{ apply lt_of_lt_of_equiv _ h, exact hGn.1 },
-	{ apply lt_of_equiv_of_lt h.symm, exact hGn.2 }
-end
-
+λ hGn, ⟨ lt_of_lt_of_equiv hGn.1 h, lt_of_equiv_of_lt h.symm hGn.2 ⟩
 lemma l_position_of_equiv {G H : pgame} (h : G ≈ H) : G.l_position → H.l_position :=
-begin
-	intro hGl,
-	split,
-	{ apply lt_of_lt_of_equiv _ h, exact hGl.1 },
-	{ apply le_of_le_of_equiv _ h, exact hGl.2 }
-end
-
+λ hGl, ⟨ lt_of_lt_of_equiv hGl.1 h, le_of_le_of_equiv hGl.2 h ⟩
 lemma r_position_of_equiv {G H : pgame} (h : G ≈ H) : G.r_position → H.r_position :=
-begin
-	intro hGr,
-	split,
-	{ apply le_of_equiv_of_le h.symm, exact hGr.1 },
-	{ apply lt_of_equiv_of_lt h.symm, exact hGr.2 }
-end
+λ hGr, ⟨ le_of_equiv_of_le h.symm hGr.1, lt_of_equiv_of_lt h.symm hGr.2 ⟩
 
 lemma p_position_of_equiv_iff {G H : pgame} (h : G ≈ H) : G.p_position ↔ H.p_position :=
 ⟨ p_position_of_equiv h, p_position_of_equiv h.symm ⟩

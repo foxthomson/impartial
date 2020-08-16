@@ -25,8 +25,7 @@ using_well_founded {dec_tac := pgame_wf_tac}
 
 @[instance] lemma zero_impartial : impartial 0 := by tidy
 
-@[simp] lemma impartial_def {G : pgame} : 
-	G.impartial ↔ G ≈ -G ∧ (∀ i, impartial (G.move_left i)) ∧ (∀ j, impartial (G.move_right j)) := 
+@[simp] lemma impartial_def {G : pgame} : G.impartial ↔ G ≈ -G ∧ (∀ i, impartial (G.move_left i)) ∧ (∀ j, impartial (G.move_right j)) := 
 begin
 	split,
 	{	intro hi,
@@ -37,23 +36,13 @@ begin
 		exact hi }
 end
 
-lemma impartial_neg_equiv_self (G : pgame) [h : G.impartial] : G ≈ -G :=
-begin
-	rw impartial_def at h,
-	exact h.1
-end
+lemma impartial_neg_equiv_self (G : pgame) [h : G.impartial] : G ≈ -G := (impartial_def.1 h).1
 
 @[instance] lemma impartial_move_left_impartial {G : pgame} [h : G.impartial] (i : G.left_moves) : impartial (G.move_left i) :=
-begin
-	rw impartial_def at h,
-	exact h.2.1 i,
-end
+(impartial_def.1 h).2.1 i
 
 @[instance] lemma impartial_move_right_impartial {G : pgame} [h : G.impartial] (j : G.right_moves) : impartial (G.move_right j) :=
-begin
-	rw impartial_def at h,
-	exact h.2.2 j,
-end
+(impartial_def.1 h).2.2 j
 
 @[instance] lemma impartial_add : ∀ (G H : pgame) [hG : G.impartial] [hH : H.impartial], (G + H).impartial
 | G H :=
@@ -106,35 +95,24 @@ using_well_founded {dec_tac := pgame_wf_tac}
 lemma impartial_position_cases (G : pgame) [G.impartial] : G.p_position ∨ G.n_position :=
 begin
   rcases G.position_cases with hl | hr | hp | hn,
-  { exfalso, 
-    cases hl with hpos hnonneg,
-		rw ← not_lt at hnonneg,
+  { cases hl with hpos hnonneg,
+		rw ←not_lt at hnonneg,
 		have hneg := lt_of_lt_of_equiv hpos G.impartial_neg_equiv_self,
-		rw lt_iff_neg_gt at hneg,
-		rw neg_neg at hneg,
-		rw neg_zero at hneg,
+		rw [lt_iff_neg_gt, neg_neg, neg_zero] at hneg,
 		contradiction },
-	{ exfalso,
-		cases hr with hnonpos hneg,
-		rw ← not_lt at hnonpos,
+	{ cases hr with hnonpos hneg,
+		rw ←not_lt at hnonpos,
 		have hpos := lt_of_equiv_of_lt G.impartial_neg_equiv_self.symm hneg,
-		rw lt_iff_neg_gt at hpos,
-		rw neg_neg at hpos,
-		rw neg_zero at hpos,
+		rw [lt_iff_neg_gt, neg_neg, neg_zero] at hpos,
 		contradiction },
 	{ left, assumption },
 	{ right, assumption }
 end
 
 lemma impartial_add_self (G : pgame) [G.impartial] : (G + G).p_position :=
-begin
-	rw p_position_is_zero,
-	apply equiv_trans,
-	exact add_congr G.impartial_neg_equiv_self G.equiv_refl,
-	exact add_left_neg_equiv
-end
+p_position_is_zero.2 $ equiv_trans (add_congr G.impartial_neg_equiv_self G.equiv_refl) add_left_neg_equiv
 
-/-- A different way of viewing equivalence. I think this should work for non impartial games with cases for l- and r-positons -/
+/-- A different way of viewing equivalence. -/
 def additive_equiv (G H : pgame) [G.impartial] [H.impartial] : Prop :=
 	∀ (F : pgame) [F.impartial], (G + F).p_position ↔ (H + F).p_position
 
@@ -144,217 +122,128 @@ begin
 	{ intro heq,
 		cases G.impartial_position_cases with hGp hGn,
 		{ specialize heq 0, 
-			rw p_position_of_equiv_iff G.add_zero_equiv at heq, 
-			rw p_position_of_equiv_iff H.add_zero_equiv at heq, 
-			rw p_position_is_zero at hGp heq,
-			rw p_position_is_zero at heq,
-			have hHp := heq.1 hGp,
-			apply equiv_trans,
-			exact hGp,
-			exact hHp.symm },
+			rw [p_position_of_equiv_iff G.add_zero_equiv, p_position_of_equiv_iff H.add_zero_equiv, p_position_is_zero, p_position_is_zero] at heq,
+			rw p_position_is_zero at hGp,
+			exact equiv_trans hGp (heq.1 hGp).symm },
 		{ split,
 			{ rw le_iff_sub_nonneg,
 				specialize heq (-G),
-				rw p_position_of_equiv_iff add_comm_equiv at heq,
-				rw p_position_of_equiv_iff add_left_neg_equiv at heq, 
-				have hHGp := heq.1 zero_p_postition,
-				exact hHGp.2 },
+				rw [p_position_of_equiv_iff add_comm_equiv, p_position_of_equiv_iff add_left_neg_equiv] at heq,
+				exact (heq.1 zero_p_postition).2 },
 			{ rw le_iff_sub_nonneg,
 				specialize heq (-H),
 				nth_rewrite 1 p_position_of_equiv_iff add_comm_equiv at heq,
 				rw p_position_of_equiv_iff add_left_neg_equiv at heq,
-				have hGHp := heq.2 zero_p_postition,
-				exact hGHp.2 } } },
-	{ intro heq,
-		intros F hf,
-		rw p_position_is_zero,
-		rw p_position_is_zero,
+				exact (heq.2 zero_p_postition).2 } } },
+	{ intros heq F hf,
+		rw [p_position_is_zero, p_position_is_zero],
 		split,
 		{ intro hGF,
-			apply equiv_trans,
-			apply add_congr,
-			exact heq.symm,
-			refl,
-			exact hGF },
+			exact equiv_trans (add_congr heq.symm $ equiv_refl _) hGF },
 		{ intro hHF,
-			apply equiv_trans,
-			apply add_congr,
-			exact heq,
-			refl,
-			exact hHF } }
+			exact equiv_trans (add_congr heq $ equiv_refl _) hHF } }
 end
 
 lemma equiv_iff_sum_p_position (G H : pgame) [G.impartial] [H.impartial] : G ≈ H ↔ (G + H).p_position :=
 begin
 	split,
 	{ intro heq,
-		apply p_position_of_equiv,
-		apply add_congr,
-		refl,
-		exact heq,
-		exact G.impartial_add_self },
+		exact p_position_of_equiv (add_congr (equiv_refl _) heq) G.impartial_add_self },
 	{ intro hGHp,
 		split,
 		{ rw le_iff_sub_nonneg,
-			apply le_trans,
-			use hGHp.2,
-			apply le_trans,
-			use add_comm_le,
-			apply le_of_le_of_equiv,
-			refl,
-			apply add_congr,
-			refl,
-			exact G.impartial_neg_equiv_self },
+			exact le_trans hGHp.2 (le_trans add_comm_le $ le_of_le_of_equiv (le_refl _) $ add_congr (equiv_refl _) G.impartial_neg_equiv_self) },
 		{ rw le_iff_sub_nonneg,
-			apply le_trans,
-			use hGHp.2,
-			apply le_of_le_of_equiv,
-			refl,
-			apply add_congr,
-			refl,
-			exact H.impartial_neg_equiv_self } }
+			exact le_trans hGHp.2 (le_of_le_of_equiv (le_refl _) $ add_congr (equiv_refl _) H.impartial_neg_equiv_self) } }
 end
 
 lemma impartial_p_position_symm (G : pgame) [G.impartial] : G.p_position ↔ G ≤ 0 :=
 begin
-	split,
-	{ intro hp,
-		exact hp.1 },
+	use and.left,
 	{ intro hneg,
-		use hneg,
-		rw zero_le_iff_neg_le_zero,
-		apply le_of_equiv_of_le,
-		exact (impartial_neg_equiv_self G).symm,
-		assumption }
+		exact ⟨ hneg, zero_le_iff_neg_le_zero.2 (le_of_equiv_of_le (impartial_neg_equiv_self G).symm hneg) ⟩ }
 end
 
 lemma impartial_n_position_symm (G : pgame) [G.impartial] : G.n_position ↔ G < 0 :=
 begin
-	split,
-	{ intro hn,
-		exact hn.2 },
+	use and.right,
 	{ intro hneg,
 		split,
 		rw lt_iff_neg_gt,
 		rw neg_zero,
-		apply lt_of_equiv_of_lt,
-		exact (impartial_neg_equiv_self G).symm,
-		exact hneg,
+		exact lt_of_equiv_of_lt G.impartial_neg_equiv_self.symm hneg,
 		exact hneg }
 end
 
 lemma impartial_p_position_symm' (G : pgame) [G.impartial] : G.p_position ↔ 0 ≤ G :=
 begin
-	split,
-	{ intro hp,
-		exact hp.2 },
+	use and.right,
 	{ intro hpos,
-		split,
-		rw le_zero_iff_zero_le_neg,
-		apply le_of_le_of_equiv,
-		exact hpos,
-		exact (impartial_neg_equiv_self G),
-		assumption }
+		exact ⟨ le_zero_iff_zero_le_neg.2 $ le_of_le_of_equiv hpos G.impartial_neg_equiv_self, hpos ⟩ }
 end
 
 lemma impartial_n_position_symm' (G : pgame) [G.impartial] : G.n_position ↔ 0 < G :=
 begin
-	split,
-	{ intro hn,
-		exact hn.1 },
+	use and.left,
 	{ intro hpos,
 		use hpos,
 		rw lt_iff_neg_gt,
 		rw neg_zero,
-		apply lt_of_lt_of_equiv,
-		exact hpos,
-		exact (impartial_neg_equiv_self G) }
+		exact lt_of_lt_of_equiv hpos G.impartial_neg_equiv_self }
 end
 
 lemma no_good_left_moves_iff_p_position (G : pgame) [G.impartial] : (∀ (i : G.left_moves), (G.move_left i).n_position) ↔ G.p_position :=
 begin
 	split,
 	{	intro hbad,
-		rw impartial_p_position_symm,
-		rw le_def_lt,
+		rw [impartial_p_position_symm, le_def_lt],
 		split,
 		{ intro i,
 			specialize hbad i,
 			exact hbad.2 },
 		{ intro j,
 			exact pempty.elim j } },
-	{ intro hp,
-		intro i,
-		rw impartial_n_position_symm,
-		rw impartial_p_position_symm at hp,
-		rw le_def_lt at hp,
-		cases hp with hp,
-		specialize hp i,
-		assumption }
+	{ intros hp i,
+		exact (G.move_left i).impartial_n_position_symm.2 ((le_def_lt.1 $ G.impartial_p_position_symm.1 hp).1 i) }
 end
 
 lemma no_good_right_moves_iff_p_position (G : pgame) [G.impartial] : (∀ (j : G.right_moves), (G.move_right j).n_position) ↔ G.p_position :=
 begin
 	split,
 	{ intro hbad,
-		rw impartial_p_position_symm',
-		rw le_def_lt,
+		rw [impartial_p_position_symm', le_def_lt],
 		split,
 		{ intro i,
 			exact pempty.elim i },
 		{ intro j,
 			specialize hbad j,
 			exact hbad.1 } },
-	{ intro hp,
-		intro j,
-		rw impartial_n_position_symm',
-		rw impartial_p_position_symm' at hp,
-		rw le_def_lt at hp,
-		cases hp with _ hp,
-		specialize hp j,
-		assumption }
+	{ intros hp j,
+		exact (G.move_right j).impartial_n_position_symm'.2 ((le_def_lt.1 $ G.impartial_p_position_symm'.1 hp).2 j) }
 end
 
 lemma good_left_move_iff_n_position (G : pgame) [G.impartial] : (∃ (i : G.left_moves), (G.move_left i).p_position) ↔ G.n_position :=
 begin
 	split,
 	{ rintro ⟨ i, hi ⟩,
-		rw impartial_n_position_symm',
-		rw lt_def_le,
-		left,
-		use i,
-		exact hi.2 },
+		exact G.impartial_n_position_symm'.2 (lt_def_le.2 $ or.inl ⟨ i, hi.2 ⟩) },
 	{ intro hn,
-		rw impartial_n_position_symm' at hn,
-		rw lt_def_le at hn,
-		cases hn with hn hn,
-		{ cases hn with i hi,
-			use i,
-			rw impartial_p_position_symm',
-			exact hi },
-		{ cases hn with j,
-			exact pempty.elim j } }
+		rw [impartial_n_position_symm', lt_def_le] at hn,
+		rcases hn with ⟨ i, hi ⟩ | ⟨ j, _ ⟩,
+		{ exact ⟨ i, (G.move_left i).impartial_p_position_symm'.2 hi ⟩ },
+		{ exact pempty.elim j } }
 end
 
 lemma good_right_move_iff_n_position (G : pgame) [G.impartial] : (∃ j : G.right_moves,  (G.move_right j).p_position) ↔ G.n_position :=
 begin
 	split,
 	{ rintro ⟨ j, hj ⟩,
-		rw impartial_n_position_symm,
-		rw lt_def_le,
-		right,
-		use j,
-		exact hj.1 },
+		exact G.impartial_n_position_symm.2 (lt_def_le.2 $ or.inr ⟨ j, hj.1 ⟩) },
 	{ intro hn,
-		rw impartial_n_position_symm at hn,
-		rw lt_def_le at hn,
-		cases hn with hn hn,
-		{ cases hn with i,
-			exact pempty.elim i },
-		{ cases hn with j hj,
-			use j,
-			rw impartial_p_position_symm,
-			exact hj } }
+		rw [impartial_n_position_symm, lt_def_le] at hn,
+		rcases hn with ⟨ i, _ ⟩ | ⟨ j, hj ⟩,
+		{ exact pempty.elim i },
+		{ exact ⟨ j, (G.move_right j).impartial_p_position_symm.2 hj ⟩ } }
 end
 
 end pgame
